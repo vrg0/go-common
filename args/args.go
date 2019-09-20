@@ -1,7 +1,7 @@
 package args
 
 /**
- * 使用args模块必须进行
+ * 使用args模块必须进行初始化
  */
 
 import (

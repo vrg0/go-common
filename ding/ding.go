@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+/**
+ * 使用前必须进行初始化
+ */
+
 type Message struct {
 	MsgType string `json:"msgtype"`
 	Text    Text   `json:"text"`
