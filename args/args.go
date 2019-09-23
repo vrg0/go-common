@@ -7,6 +7,8 @@ package args
 import (
 	"errors"
 	"flag"
+	"os"
+	"strings"
 )
 
 var (
@@ -18,6 +20,7 @@ var (
 	eosNamespace  string
 	appName       string
 	isInitialized = false
+	argNameList = []string{"-env", "-idc", "-log_dir", "-eos_host", "-eos_namespace"}
 )
 
 func Init(applicationName string) error {
@@ -25,15 +28,30 @@ func Init(applicationName string) error {
 	if isInitialized {
 		return errors.New("the args module have been initialized")
 	} else {
-		flag.StringVar(&env, "env", "dev", "Env: dev/pro")
-		flag.StringVar(&idc, "idc", "k8s", "Idc: k8s/3C")
-		flag.StringVar(&logDir, "log_dir", "/var/log/", "LogPath: /var/log/")
-		flag.StringVar(&eosHost, "eos_host", "", "EosHost: No default value")
-		flag.StringVar(&eosNamespace, "eos_namespace", "", "EosNamespace: No default value")
-		flag.Parse()
+		//获取args
+		args := make([]string, 0)
+		for _, arg := range os.Args {
+			for _, subStr := range argNameList {
+				if strings.Contains(arg, subStr) {
+					args = append(args, arg)
+					break
+				}
+			}
+		}
+
+		flagSet := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+		flagSet.StringVar(&env, "env", "dev", "Env: dev/pro")
+		flagSet.StringVar(&idc, "idc", "k8s", "Idc: k8s/3C")
+		flagSet.StringVar(&logDir, "log_dir", "/var/log/", "LogPath: /var/log/")
+		flagSet.StringVar(&eosHost, "eos_host", "", "EosHost: No default value")
+		flagSet.StringVar(&eosNamespace, "eos_namespace", "", "EosNamespace: No default value")
+		if e := flagSet.Parse(args); e != nil {
+			return e
+		}
 	}
 
 	//过滤参数
+	applicationName = strings.TrimSpace(applicationName) //去除空白
 	if applicationName == "" {
 		return errors.New("applicationName can not be empty")
 	}
