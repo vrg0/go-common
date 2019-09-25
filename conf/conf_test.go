@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+//1、配置中心存在时，会从配置中心中取出数据。
+//2、配置中心断开时，会从缓存文件中取出数据。
 func TestInit(t *testing.T) {
 	appId := os.Getenv("TEST_APP_ID")
 	domainName := os.Getenv("TEST_DOMAIN_NAME")
@@ -24,6 +26,14 @@ func TestRefreshKvMap(t *testing.T) {
 	kvMap["REDIS_SERVICE_PORT_6379"] = "6379"
 	if e := RefreshKvMap(kvMap); e != nil {
 		t.Error(e)
+	}
+
+	if v, ok := kvMap["REDIS_SERVICE_HOST"]; !ok || v != "1.1.1.1" {
+		t.Error("refreshKvMap fatal")
+	}
+
+	if v, ok := kvMap["REDIS_SERVICE_PORT_6379"]; !ok || v != "6379" {
+		t.Error("refreshKvMap fatal")
 	}
 }
 

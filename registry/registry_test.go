@@ -45,11 +45,15 @@ func defaultRegistryClear() {
 }
 
 func TestInit(t *testing.T) {
+	//registry不存在的情况，预期会报错
 	defaultRegistryClear()
-	if e := Init("testXXX", nil); e == nil {
-		t.Error("init error")
+	if e := Init("testXXX", nil); e != nil {
+		if e.Error() != "not found registry" {
+			t.Error(e)
+		}
 	}
 
+	//registry存在的情况，预期不报错
 	defaultRegistryClear()
 	if e := Init("test", nil); e != nil {
 		t.Error(e)
@@ -57,12 +61,16 @@ func TestInit(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
+	//registry存在的情况，预期不报错
 	if _, e := New("test"); e != nil {
 		t.Error(e)
 	}
 
-	if _, e := New("testXXX"); e == nil {
-		t.Error("registry error")
+	//registry不存在的情况，预期报错
+	if _, e := New("testXXX"); e != nil {
+		if e.Error() != "not found registry" {
+			t.Error(e)
+		}
 	}
 }
 
