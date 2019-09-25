@@ -3,7 +3,7 @@ package ding
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
-	"go-common/util"
+	"github.com/vrg0/go-common/util"
 	"net/http"
 	"strings"
 )

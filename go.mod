@@ -1,4 +1,4 @@
-module go-common
+module github.com/vrg0/go-common
 
 go 1.12
 
