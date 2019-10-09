@@ -4,12 +4,12 @@ import (
 	"testing"
 )
 
-func TestGetDefault(t *testing.T) {
+func TestGetOrDefault(t *testing.T) {
 	defaultStr := "default"
-	if GetDefault("none", defaultStr) != defaultStr {
+	if GetOrDefault("none", defaultStr) != defaultStr {
 		t.Error("get default none")
 	}
-	if GetDefault("Shell", defaultStr) == defaultStr {
+	if GetOrDefault("Shell", defaultStr) == defaultStr {
 		t.Error("get default shell")
 	}
 }
