@@ -57,7 +57,7 @@ func init() {
 	}
 }
 
-//获取参数，如果找不到则使用默认参数
+//获取参数，如果失败则返回默认值
 func GetOrDefault(key string, defaultValue string) string {
 	key = strings.ToLower(key)
 	if value, ok := argMap[key]; ok {
