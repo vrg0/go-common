@@ -15,7 +15,7 @@ import (
 type Logger struct {
 	sugar  *zap.SugaredLogger
 	logger *zap.Logger
-	writer *watchWriter
+	writer *hookWriter
 }
 
 var (
@@ -71,7 +71,7 @@ func New(logPath string, level zapcore.Level) *Logger {
 			Compress:   false,   //日志备份不进行压缩，压缩会导致占用过多cpu
 		}
 	}
-	rtn.writer = newWatchWriter(writer)
+	rtn.writer = newHookWriter(writer)
 
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -88,8 +88,8 @@ func (l *Logger) GetStandardLogger() *log.Logger {
 	return zap.NewStdLog(l.logger)
 }
 
-func (l *Logger) SetWatchFunc(watchFunc WatchFunc) {
-	l.writer.AddWatchFunc(watchFunc)
+func (l *Logger) SetHookFunc(hookFunc HookFunc) {
+	l.writer.AddHookFunc(hookFunc)
 }
 
 func (l *Logger) Debug(args ...interface{}) {
@@ -260,8 +260,8 @@ func Fatalw(msg string, keysAndValues ...interface{}) {
 	defaultLogger.Fatalw(msg, keysAndValues...)
 }
 
-func SetWatchFunc(watchFunc WatchFunc) {
-	defaultLogger.writer.AddWatchFunc(watchFunc)
+func SetHookFunc(hookFunc HookFunc) {
+	defaultLogger.writer.AddHookFunc(hookFunc)
 }
 
 func GetStandardLogger() *log.Logger {

@@ -32,7 +32,7 @@ logger.Info("info")
 logger.ResetDefaultLogger("/log/path", zapcore.DebugLevel)
 
 //日志hook
-logger.SetWatchFunc(func(data []byte) {
+logger.SetHookFunc(func(data []byte) {
   //fmt.Println(string(data))
 })
 
@@ -42,7 +42,7 @@ sl := logger.GetStandardLogger()
 //日志hook & 标准库日志
 sl := logger.GetStandardLogger()
 sl.SetPrefix("_LogHook_")
-logger.SetWatchFunc(func(data []byte) {
+logger.SetHookFunc(func(data []byte) {
   if strings.Contains(string(data), "_LogHook")  {
     //fmt.Println(string(data))
   }

@@ -167,18 +167,18 @@ func TestResetDefaultLogger(t *testing.T) {
 	Info("reset default logger")
 }
 
-func TestSetWatchFunc(t *testing.T) {
-	SetWatchFunc(func(data []byte) {
-		t.Log("watch func hook", string(data))
+func TestSetHookFunc(t *testing.T) {
+	SetHookFunc(func(data []byte) {
+		t.Log("data hook", string(data))
 	})
 
-	Info("test watch func ")
+	Info("test hook")
 }
 
 func TestGetStandardLogger(t *testing.T) {
 	sl := GetStandardLogger()
 	sl.SetPrefix("_TestStandardLogger_")
-	SetWatchFunc(func(data []byte) {
+	SetHookFunc(func(data []byte) {
 		if strings.Contains(string(data), "_TestStandardLogger_") {
 			t.Log("hook _TestStandardLogger_")
 		}
