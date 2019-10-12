@@ -1,118 +1,78 @@
 package args
 
 /**
- * 使用args模块必须进行初始化
+ * 从[环境变量]或[命令行参数]中获取配置
+ * key不区分大小写，value区分大小写
+ * [命令行参数]会覆盖掉[环境变量]中的配置
  */
 
 import (
-	"errors"
-	"flag"
 	"os"
 	"strings"
 )
 
 var (
-	env           string
-	idc           string
-	logDir        string
-	logPath       string
-	eosHost       string
-	eosNamespace  string
-	appName       string
-	isInitialized = false
-	argNameList = []string{"-env", "-idc", "-log_dir", "-eos_host", "-eos_namespace"}
+	argMap = make(map[string]string)
 )
 
-func Init(applicationName string) error {
-	//懒汉单例
-	if isInitialized {
-		return errors.New("the args module have been initialized")
+func argUnMarshal(arg string) (string, string, bool) {
+	kv := strings.Split(arg, "=")
+	if len(kv) != 2 {
+		return "", "", false
+	}
+
+	key := kv[0]
+	if key[0] != '-' {
+		return "", "", false
+	}
+	if key[1] == '-' {
+		key = key[2:]
 	} else {
-		//获取args
-		args := make([]string, 0)
-		for _, arg := range os.Args {
-			for _, subStr := range argNameList {
-				if strings.Contains(arg, subStr) {
-					args = append(args, arg)
-					break
-				}
-			}
-		}
+		key = key[1:]
+	}
+	key = strings.ToLower(key)
 
-		flagSet := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-		flagSet.StringVar(&env, "env", "dev", "Env: dev/pro")
-		flagSet.StringVar(&idc, "idc", "k8s", "Idc: k8s/3C")
-		flagSet.StringVar(&logDir, "log_dir", "/var/log/", "LogPath: /var/log/")
-		flagSet.StringVar(&eosHost, "eos_host", "", "EosHost: No default value")
-		flagSet.StringVar(&eosNamespace, "eos_namespace", "", "EosNamespace: No default value")
-		if e := flagSet.Parse(args); e != nil {
-			return e
-		}
+	value := kv[1]
+
+	return key, value, true
+}
+
+func envUnMarshal(env string) (string, string) {
+	kv := strings.Split(env, "=")
+	return strings.ToLower(kv[0]), kv[1]
+}
+
+func init() {
+	//解析环境变量
+	for _, env := range os.Environ() {
+		k, v := envUnMarshal(env)
+		argMap[k] = v
 	}
 
-	//过滤参数
-	applicationName = strings.TrimSpace(applicationName) //去除空白
-	if applicationName == "" {
-		return errors.New("applicationName can not be empty")
-	}
-	if env == "" {
-		return errors.New("env can not be empty")
-	}
-	if idc == "" {
-		return errors.New("idc can not be empty")
-	}
-	if logDir == "" {
-		return errors.New("logDir can not be empty")
-	} else if logDir[len(logDir)-1] != '/' {
-		logDir += "/"
-	}
-	if !EnvIsPro() {
-		if eosNamespace == "" {
-			return errors.New("eos_namespace can not be empty")
-		}
-		if eosHost == "" {
-			return errors.New("eos_host can not be empty")
-		} else if eosHost[len(eosHost)-1] != '/' {
-			eosHost += "/"
+	//解析命令行参数
+	for _, arg := range os.Args {
+		if k, v, ok := argUnMarshal(arg); ok {
+			argMap[k] = v
 		}
 	}
-	logPath = logDir + applicationName + "/" + applicationName + ".log"
-	appName = applicationName
-
-	//标记
-	isInitialized = true
-
-	return nil
 }
 
-func GetLogPath() string {
-	return logPath
+//获取参数，如果失败则返回默认值
+func GetOrDefault(key string, defaultValue string) string {
+	key = strings.ToLower(key)
+	if value, ok := argMap[key]; ok {
+		return value
+	} else {
+		return defaultValue
+	}
 }
 
-func GetLogDir() string {
-	return logDir
-}
-
-func GetEosNamespace() string {
-	return eosNamespace
-}
-
-func GetEosHost() string {
-	return eosHost
-}
-
-func GetEnv() string {
-	return env
-}
-
-func GetIdc() string {
-	return idc
-}
-
-func EnvIsPro() bool {
-	return env == "pro"
-}
-
-func GetAppName() string {
-	return appName
+//获取参数，成功返回(value, true)，失败返回("", false)
+func Get(key string) (string, bool) {
+	key = strings.ToLower(key)
+	if value, ok := argMap[key]; ok {
+		return value, true
+	} else {
+		return "", false
+	}
 }
