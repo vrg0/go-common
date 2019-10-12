@@ -15,7 +15,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -34,9 +33,7 @@ type Conf struct {
 	ago                  agollo.Agollo
 	logger               *log.Logger
 	namespaceHandler     []*watchNamespaceHandler
-	namespaceHandlerLock *sync.RWMutex
 	keyHandler           []*watchKeyHandler
-	keyHandlerLock       *sync.RWMutex
 }
 
 func New(configServer string, appId string, cluster string, cacheFilePath string, logger *log.Logger) (*Conf, error) {
@@ -44,9 +41,7 @@ func New(configServer string, appId string, cluster string, cacheFilePath string
 		kvMap:                make(map[string]string),
 		logger:               logger,
 		namespaceHandler:     make([]*watchNamespaceHandler, 0),
-		namespaceHandlerLock: new(sync.RWMutex),
 		keyHandler:           make([]*watchKeyHandler, 0),
-		keyHandlerLock:       new(sync.RWMutex),
 	}
 
 	if newAgo, err := agollo.New(

@@ -41,8 +41,6 @@ func (c *Conf) startWatch() {
 				oldValue := mapInterfaceToString(w.OldValue)
 				newValue := mapInterfaceToString(w.NewValue)
 
-				//Watch Namespace
-				c.namespaceHandlerLock.RLock()
 				for _, v := range c.namespaceHandler {
 					if v.Namespace == w.Namespace {
 						oldV := make(map[string]string)
@@ -56,16 +54,12 @@ func (c *Conf) startWatch() {
 						v.Handler(oldV, newV)
 					}
 				}
-				c.namespaceHandlerLock.RUnlock()
 
-				//Watch Key
-				c.keyHandlerLock.RLock()
 				for _, v := range c.keyHandler {
 					if v.Namespace == w.Namespace {
 						v.Handler(oldValue[v.Key], newValue[v.Key])
 					}
 				}
-				c.keyHandlerLock.RUnlock()
 			}
 		}
 	}()
@@ -73,12 +67,15 @@ func (c *Conf) startWatch() {
 
 func (c *Conf)WatchNamespace(namespace string, handler func(oldCfgs map[string]string, newCfgs map[string]string)) {
 	//添加处理函数
-	c.namespaceHandlerLock.Lock()
-	defer c.namespaceHandlerLock.Unlock()
-	c.namespaceHandler = append(c.namespaceHandler, &watchNamespaceHandler{
+	newNamespaceHandler := make([]*watchNamespaceHandler, 0)
+	for _, watchHandler := range c.namespaceHandler {
+		newNamespaceHandler = append(newNamespaceHandler, watchHandler)
+	}
+	newNamespaceHandler = append(newNamespaceHandler, &watchNamespaceHandler{
 		Namespace: namespace,
 		Handler:   handler,
 	})
+	c.namespaceHandler = newNamespaceHandler
 
 	//首次加载数据
 	handler(make(map[string]string), GetNamespace(namespace))
@@ -86,13 +83,16 @@ func (c *Conf)WatchNamespace(namespace string, handler func(oldCfgs map[string]s
 
 func (c *Conf)Watch(namespace string, key string, handler func(oldCfg string, newCfg string)) {
 	//加载处理函数
-	c.keyHandlerLock.Lock()
-	defer c.keyHandlerLock.Unlock()
-	c.keyHandler = append(c.keyHandler, &watchKeyHandler{
+	newKeyHandler := make([]*watchKeyHandler, 0)
+	for _, watchHandler := range c.keyHandler {
+		newKeyHandler = append(newKeyHandler, watchHandler)
+	}
+	newKeyHandler = append(newKeyHandler, &watchKeyHandler{
 		Namespace: namespace,
 		Key:       key,
 		Handler:   handler,
 	})
+	c.keyHandler = newKeyHandler
 
 	//首次加载数据
 	kv := GetNamespace(namespace)
