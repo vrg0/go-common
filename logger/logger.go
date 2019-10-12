@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"errors"
 	"github.com/natefinch/lumberjack"
 	"github.com/vrg0/go-common/args"
 	"go.uber.org/zap"
@@ -37,13 +38,14 @@ func init() {
 	defaultLogger = New(logPath, level)
 }
 
-func ResetDefaultLogger(logPath string, level zapcore.Level) {
+func ResetDefaultLogger(logPath string, level zapcore.Level) error {
 	if logPath == "" {
-		logPath = "/dev/stdout'"
+		return errors.New("logPath can not be equal to nil")
 	}
 
 	newLogger := New(logPath, level)
 	atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&defaultLogger)), unsafe.Pointer(newLogger))
+	return nil
 }
 
 // 新建Logger对象，成功返回对象指针，失败返回nil
