@@ -6,6 +6,8 @@ args模块在init的过程中会读取[环境变量]和[命令行参数]的kv对
 
 当[环境变量]和[命令行参数]中的key重复时，默认读取[命令行参数]中的key。
 
+命令行参数格式：key=value | -key=value | --key=value
+
 ```go
 //获取参数，如果失败则返回默认值
 value := args.GetOrDefault("key", "defaultValue")
