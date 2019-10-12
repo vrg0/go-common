@@ -1,5 +1,31 @@
 package conf
 
+import "testing"
+
+func TestGet(t *testing.T) {
+	v, ok := Get("blacklist.url", "kkk")
+	if !ok {
+
+	} else {
+		t.Log(v)
+	}
+}
+
+/*
+func TestGetNamespace(t *testing.T) {
+
+}
+
+func TestGetOrDefault(t *testing.T) {
+
+}
+
+func TestRefreshKvMap(t *testing.T) {
+
+}
+ */
+
+/*
 import (
 	"log"
 	"os"
@@ -61,3 +87,4 @@ func TestGetNamespace(t *testing.T) {
 		t.Log(k, v)
 	}
 }
+*/

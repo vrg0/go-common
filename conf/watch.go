@@ -1,8 +1,6 @@
 package conf
 
 import (
-	"github.com/shima-park/agollo"
-	"sync"
 	"time"
 )
 
@@ -17,14 +15,6 @@ type watchKeyHandler struct {
 	Handler   func(string, string)
 }
 
-var (
-	namespaceHandler     = make([]*watchNamespaceHandler, 0)
-	namespaceHandlerLock = new(sync.RWMutex)
-	keyHandler           = make([]*watchKeyHandler, 0)
-	keyHandlerLock       = new(sync.RWMutex)
-	startWatchOnce       = new(sync.Once)
-)
-
 func mapInterfaceToString(interfaceMap map[string]interface{}) map[string]string {
 	stringMap := make(map[string]string)
 	for k, v := range interfaceMap {
@@ -35,13 +25,13 @@ func mapInterfaceToString(interfaceMap map[string]interface{}) map[string]string
 	return stringMap
 }
 
-func startWatch() {
-	watchChan := agollo.Watch()
+func (c *Conf) startWatch() {
+	watchChan := c.ago.Watch()
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
 				time.Sleep(time.Second * 1)
-				go startWatch()
+				go c.startWatch()
 			}
 		}()
 
@@ -52,8 +42,8 @@ func startWatch() {
 				newValue := mapInterfaceToString(w.NewValue)
 
 				//Watch Namespace
-				namespaceHandlerLock.RLock()
-				for _, v := range namespaceHandler {
+				c.namespaceHandlerLock.RLock()
+				for _, v := range c.namespaceHandler {
 					if v.Namespace == w.Namespace {
 						oldV := make(map[string]string)
 						for k, v := range oldValue {
@@ -66,30 +56,26 @@ func startWatch() {
 						v.Handler(oldV, newV)
 					}
 				}
-				namespaceHandlerLock.RUnlock()
+				c.namespaceHandlerLock.RUnlock()
 
 				//Watch Key
-				keyHandlerLock.RLock()
-				for _, v := range keyHandler {
+				c.keyHandlerLock.RLock()
+				for _, v := range c.keyHandler {
 					if v.Namespace == w.Namespace {
 						v.Handler(oldValue[v.Key], newValue[v.Key])
 					}
 				}
-				keyHandlerLock.RUnlock()
+				c.keyHandlerLock.RUnlock()
 			}
 		}
 	}()
 }
 
-func StartWatch() {
-	startWatchOnce.Do(startWatch)
-}
-
-func WatchNamespace(namespace string, handler func(oldCfgs map[string]string, newCfgs map[string]string)) {
+func (c *Conf)WatchNamespace(namespace string, handler func(oldCfgs map[string]string, newCfgs map[string]string)) {
 	//添加处理函数
-	namespaceHandlerLock.Lock()
-	defer namespaceHandlerLock.Unlock()
-	namespaceHandler = append(namespaceHandler, &watchNamespaceHandler{
+	c.namespaceHandlerLock.Lock()
+	defer c.namespaceHandlerLock.Unlock()
+	c.namespaceHandler = append(c.namespaceHandler, &watchNamespaceHandler{
 		Namespace: namespace,
 		Handler:   handler,
 	})
@@ -98,11 +84,11 @@ func WatchNamespace(namespace string, handler func(oldCfgs map[string]string, ne
 	handler(make(map[string]string), GetNamespace(namespace))
 }
 
-func Watch(namespace string, key string, handler func(oldCfg string, newCfg string)) {
+func (c *Conf)Watch(namespace string, key string, handler func(oldCfg string, newCfg string)) {
 	//加载处理函数
-	keyHandlerLock.Lock()
-	defer keyHandlerLock.Unlock()
-	keyHandler = append(keyHandler, &watchKeyHandler{
+	c.keyHandlerLock.Lock()
+	defer c.keyHandlerLock.Unlock()
+	c.keyHandler = append(c.keyHandler, &watchKeyHandler{
 		Namespace: namespace,
 		Key:       key,
 		Handler:   handler,
