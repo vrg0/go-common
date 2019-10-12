@@ -199,25 +199,43 @@ func ResetDefaultConf(configServer string, appName string, idc string, cacheFile
 }
 
 func RefreshKvMap(kvMapper map[string]string) {
+	if defaultConf == nil {
+		return
+	}
 	defaultConf.RefreshKvMap(kvMapper)
 }
 
 func Get(namespace string, key string) (string, bool) {
+	if defaultConf == nil {
+		return "", false
+	}
 	return defaultConf.Get(namespace, key)
 }
 
 func GetOrDefault(namespace string, key string, defaultValue string) string {
+	if defaultConf == nil {
+		return defaultValue
+	}
 	return defaultConf.GetOrDefault(namespace, key, defaultValue)
 }
 
 func GetNamespace(namespace string) map[string]string {
+	if defaultConf == nil {
+		return make(map[string]string)
+	}
 	return defaultConf.GetNamespace(namespace)
 }
 
 func WatchNamespace(namespace string, handler func(oldCfgs map[string]string, newCfgs map[string]string)) {
+	if defaultConf == nil {
+		return
+	}
 	defaultConf.WatchNamespace(namespace, handler)
 }
 
 func Watch(namespace string, key string, handler func(oldCfg string, newCfg string)) {
+	if defaultConf == nil {
+		return
+	}
 	defaultConf.Watch(namespace, key, handler)
 }
