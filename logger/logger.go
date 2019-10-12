@@ -1,150 +1,269 @@
 package logger
 
-/**
- * 使用log模块必须进行初始化
- */
-
 import (
 	"github.com/natefinch/lumberjack"
-	"github.com/pkg/errors"
+	"github.com/vrg0/go-common/args"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"io"
 	"log"
 	"os"
+	"sync/atomic"
+	"unsafe"
 )
 
-var sugar *zap.SugaredLogger = nil
-var defaultLogger *log.Logger = nil
+type Logger struct {
+	sugar  *zap.SugaredLogger
+	logger *zap.Logger
+	writer *hookWriter
+}
 
-//当envIsPro为true时，logPath不能为空，日志会打印到指定文件
-//等envIsPro为false时，logPath参数无效，日志会打印到标准输出
-func Init(envIsPro bool, logPath string) error {
-	if defaultLogger != nil || sugar != nil {
-		return errors.New("the logger module have been initialized")
+var (
+	defaultLogger *Logger = nil
+)
+
+func init() {
+	env := args.GetOrDefault("env", "dev")
+	var logPath string
+	var level zapcore.Level
+	if env == "dev" {
+		logPath = args.GetOrDefault("log_path", "/dev/stdout")
+		level = zapcore.DebugLevel
+	} else {
+		logPath = args.GetOrDefault("log_path", os.Args[0]+".log")
+		level = zapcore.InfoLevel
 	}
 
-	if envIsPro && logPath == "" {
-		return errors.New("when envIsPro equals true, logPath can not be empty")
+	defaultLogger = New(logPath, level)
+}
+
+func ResetDefaultLogger(logPath string, level zapcore.Level) {
+	if logPath == "" {
+		logPath = "/dev/stdout'"
 	}
 
-	config := zap.NewProductionEncoderConfig()
-	config.EncodeTime = zapcore.ISO8601TimeEncoder
-	encoder := zapcore.NewConsoleEncoder(config)
-	var logger *zap.Logger
+	newLogger := New(logPath, level)
+	atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&defaultLogger)), unsafe.Pointer(newLogger))
+}
 
-	if envIsPro { //生产环境，打印到文件，级别Info
-		writeSyncer := zapcore.AddSync(&lumberjack.Logger{
+// 新建Logger对象，成功返回对象指针，失败返回nil
+func New(logPath string, level zapcore.Level) *Logger {
+	//参数过滤
+	if logPath == "" {
+		logPath = "/dev/stdout"
+	}
+
+	rtn := Logger{}
+
+	var writer io.Writer
+	switch logPath {
+	case "/dev/stdout":
+		writer = os.Stdout
+	case "/dev/stderr":
+		writer = os.Stderr
+	default:
+		writer = &lumberjack.Logger{
 			Filename:   logPath, //日志路径
 			MaxSize:    1024,    //日志大小，单位MB
 			MaxBackups: 30,      //日志文件最多保存备份
 			MaxAge:     7,       //日志文件最多保存多少天
 			LocalTime:  true,    //打印本地时间
 			Compress:   false,   //日志备份不进行压缩，压缩会导致占用过多cpu
-		})
-		logger = zap.New(zapcore.NewCore(encoder, writeSyncer, zap.InfoLevel))
-	} else { //测试环境，打印到标准输出，级别Debug
-		writeSyncer := zapcore.AddSync(os.Stdout)
-		logger = zap.New(zapcore.NewCore(encoder, writeSyncer, zap.DebugLevel))
+		}
 	}
+	rtn.writer = newHookWriter(writer)
 
-	defer func() {
-		_ = logger.Sync()
-	}()
+	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = zapcore.ISO8601TimeEncoder
+	encoder := zapcore.NewConsoleEncoder(config)
+	writeSyncer := zapcore.AddSync(rtn.writer)
+	logger := zap.New(zapcore.NewCore(encoder, writeSyncer, level))
+	rtn.logger = logger
+	rtn.sugar = logger.Sugar()
 
-	sugar = logger.Sugar()
-	defaultLogger = zap.NewStdLog(logger)
-
-	return nil
+	return &rtn
 }
 
-func GetSugar() *zap.SugaredLogger {
-	return sugar
+func (l *Logger) GetStandardLogger() *log.Logger {
+	return zap.NewStdLog(l.logger)
 }
 
-func GetDefaultLogger() *log.Logger {
-	return defaultLogger
+func (l *Logger) SetHookFunc(hookFunc HookFunc) {
+	l.writer.AddHookFunc(hookFunc)
+}
+
+func (l *Logger) Debug(args ...interface{}) {
+	l.sugar.Debug(args...)
+}
+
+func (l *Logger) Info(args ...interface{}) {
+	l.sugar.Info(args...)
+}
+
+func (l *Logger) Warn(args ...interface{}) {
+	l.sugar.Warn(args...)
+}
+
+func (l *Logger) Error(args ...interface{}) {
+	l.sugar.Error(args...)
+}
+
+func (l *Logger) DPanic(args ...interface{}) {
+	l.sugar.DPanic(args...)
+}
+
+func (l *Logger) Panic(args ...interface{}) {
+	l.sugar.Panic(args...)
+}
+
+func (l *Logger) Fatal(args ...interface{}) {
+	l.sugar.Fatal(args...)
+}
+
+func (l *Logger) Debugf(template string, args ...interface{}) {
+	l.sugar.Debugf(template, args...)
+}
+
+func (l *Logger) Infof(template string, args ...interface{}) {
+	l.sugar.Infof(template, args...)
+}
+
+func (l *Logger) Warnf(template string, args ...interface{}) {
+	l.sugar.Warnf(template, args...)
+}
+
+func (l *Logger) Errorf(template string, args ...interface{}) {
+	l.sugar.Errorf(template, args...)
+}
+
+func (l *Logger) DPanicf(template string, args ...interface{}) {
+	l.sugar.DPanicf(template, args...)
+}
+
+func (l *Logger) Panicf(template string, args ...interface{}) {
+	l.sugar.Panicf(template, args...)
+}
+
+func (l *Logger) Fatalf(template string, args ...interface{}) {
+	l.sugar.Fatalf(template, args...)
+}
+
+func (l *Logger) Debugw(msg string, keysAndValues ...interface{}) {
+	l.sugar.Debugw(msg, keysAndValues...)
+}
+
+func (l *Logger) Infow(msg string, keysAndValues ...interface{}) {
+	l.sugar.Infow(msg, keysAndValues...)
+}
+
+func (l *Logger) Warnw(msg string, keysAndValues ...interface{}) {
+	l.sugar.Warnw(msg, keysAndValues...)
+}
+
+func (l *Logger) Errorw(msg string, keysAndValues ...interface{}) {
+	l.sugar.Errorw(msg, keysAndValues...)
+}
+
+func (l *Logger) DPanicw(msg string, keysAndValues ...interface{}) {
+	l.sugar.DPanicw(msg, keysAndValues...)
+}
+
+func (l *Logger) Panicw(msg string, keysAndValues ...interface{}) {
+	l.sugar.Panicw(msg, keysAndValues...)
+}
+
+func (l *Logger) Fatalw(msg string, keysAndValues ...interface{}) {
+	l.sugar.Fatalw(msg, keysAndValues...)
 }
 
 func Debug(args ...interface{}) {
-	sugar.Debug(args...)
+	defaultLogger.Debug(args...)
 }
 
 func Info(args ...interface{}) {
-	sugar.Info(args...)
+	defaultLogger.Info(args...)
 }
 
 func Warn(args ...interface{}) {
-	sugar.Warn(args...)
+	defaultLogger.Warn(args...)
 }
 
 func Error(args ...interface{}) {
-	sugar.Error(args...)
+	defaultLogger.Error(args...)
 }
 
 func DPanic(args ...interface{}) {
-	sugar.DPanic(args...)
+	defaultLogger.DPanic(args...)
 }
 
 func Panic(args ...interface{}) {
-	sugar.Panic(args...)
+	defaultLogger.Panic(args...)
 }
 
 func Fatal(args ...interface{}) {
-	sugar.Fatal(args...)
+	defaultLogger.Fatal(args...)
 }
 
 func Debugf(template string, args ...interface{}) {
-	sugar.Debugf(template, args...)
+	defaultLogger.Debugf(template, args...)
 }
 
 func Infof(template string, args ...interface{}) {
-	sugar.Infof(template, args...)
+	defaultLogger.Infof(template, args...)
 }
 
 func Warnf(template string, args ...interface{}) {
-	sugar.Warnf(template, args...)
+	defaultLogger.Warnf(template, args...)
 }
 
 func Errorf(template string, args ...interface{}) {
-	sugar.Errorf(template, args...)
+	defaultLogger.Errorf(template, args...)
 }
 
 func DPanicf(template string, args ...interface{}) {
-	sugar.DPanicf(template, args...)
+	defaultLogger.DPanicf(template, args...)
 }
 
 func Panicf(template string, args ...interface{}) {
-	sugar.Panicf(template, args...)
+	defaultLogger.Panicf(template, args...)
 }
 
 func Fatalf(template string, args ...interface{}) {
-	sugar.Fatalf(template, args...)
+	defaultLogger.Fatalf(template, args...)
 }
 
 func Debugw(msg string, keysAndValues ...interface{}) {
-	sugar.Debugw(msg, keysAndValues...)
+	defaultLogger.Debugw(msg, keysAndValues...)
 }
 
 func Infow(msg string, keysAndValues ...interface{}) {
-	sugar.Infow(msg, keysAndValues...)
+	defaultLogger.Infow(msg, keysAndValues...)
 }
 
 func Warnw(msg string, keysAndValues ...interface{}) {
-	sugar.Warnw(msg, keysAndValues...)
+	defaultLogger.Warnw(msg, keysAndValues...)
 }
 
 func Errorw(msg string, keysAndValues ...interface{}) {
-	sugar.Errorw(msg, keysAndValues...)
+	defaultLogger.Errorw(msg, keysAndValues...)
 }
 
 func DPanicw(msg string, keysAndValues ...interface{}) {
-	sugar.DPanicw(msg, keysAndValues...)
+	defaultLogger.DPanicw(msg, keysAndValues...)
 }
 
 func Panicw(msg string, keysAndValues ...interface{}) {
-	sugar.Panicw(msg, keysAndValues...)
+	defaultLogger.Panicw(msg, keysAndValues...)
 }
 
 func Fatalw(msg string, keysAndValues ...interface{}) {
-	sugar.Fatalw(msg, keysAndValues...)
+	defaultLogger.Fatalw(msg, keysAndValues...)
+}
+
+func SetHookFunc(hookFunc HookFunc) {
+	defaultLogger.writer.AddHookFunc(hookFunc)
+}
+
+func GetStandardLogger() *log.Logger {
+	return defaultLogger.GetStandardLogger()
 }
