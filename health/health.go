@@ -2,6 +2,7 @@ package health
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
@@ -129,14 +130,21 @@ var (
 )
 
 //diskPath：要监测的磁盘的挂载路径
-func Init(appName string, ip string, diskPath string) {
+func Start(appName string, diskPath string) error {
 	//初始化
 	internalAppName = appName
-	internalIp = ip
+	ip, err := util.LocalIp()
+	if err != nil {
+		return errors.New("get local ip fatal")
+	} else {
+		internalIp = ip
+	}
 	internalDiskPath = diskPath
 
 	//单例
 	initOnce.Do(internalInit)
+
+	return nil
 }
 
 func getEndpoint() EndPoint {
