@@ -7,7 +7,9 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	Init("test", "1.2.3.4", "/")
+	if e := Start("test", "/"); e != nil {
+		t.Error(e)
+	}
 }
 
 func TestSetCallback(t *testing.T) {
@@ -16,5 +18,5 @@ func TestSetCallback(t *testing.T) {
 		fmt.Println(string(msg.ToJson()))
 	})
 
-	time.Sleep(time.Second*16)
+	time.Sleep(time.Second * 16)
 }
