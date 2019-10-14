@@ -22,15 +22,17 @@ func argUnMarshal(arg string) (string, string, bool) {
 	}
 
 	key := kv[0]
-	if len(key) == 0 {
-		return "", "", false
-	}
 
 	if len(key) > 3 && key[0:2] == "--" {
 		key = key[2:]
 	} else if len(key) > 2 && key[0:1] == "-" {
 		key = key[1:]
 	}
+
+	if len(key) == 0 {
+		return "", "", false
+	}
+
 	key = strings.ToLower(key)
 
 	value := kv[1]
