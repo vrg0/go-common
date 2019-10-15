@@ -122,7 +122,6 @@ func (c *Conf) kvMapReplace(value string) (string, bool) {
 }
 
 //获取指定namespace中的key，失败返回false
-//TODO 测试Get不到Key时的返回值
 func (c *Conf) Get(namespace string, key string) (string, bool) {
 	value := c.ago.Get(key, agollo.WithNamespace(namespace))
 	if value == "" {
@@ -136,7 +135,6 @@ func (c *Conf) Get(namespace string, key string) (string, bool) {
 }
 
 //获取指定namespace中的key，失败返回默认值
-//TODO 测试Get不到Key时的返回值
 func (c *Conf) GetOrDefault(namespace string, key string, defaultValue string) string {
 	value := c.ago.Get(key, agollo.WithNamespace(namespace))
 	if value == "" {

@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/vrg0/go-common/util"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -26,24 +27,57 @@ type Text struct {
 
 type Notify struct {
 	dstList []string
+	ignore  []string
+	re      []string
+}
+
+func (n *Notify) SetIgnore(ignore []string) {
+	n.ignore = ignore
+}
+
+func (n *Notify) SetIgnoreRegexp(re []string) {
+	n.re = re
 }
 
 func New(dstList []string) *Notify {
-	return &Notify{dstList: dstList}
+	return &Notify{
+		dstList: dstList,
+		ignore:  make([]string, 0),
+	}
+}
+
+func (n *Notify) isIgnore(body string) bool {
+	for _, sub := range n.ignore {
+		if strings.Contains(body, sub) {
+			return true
+		}
+	}
+	for _, r := range n.re {
+		if ok, _ := regexp.MatchString(r, body); ok {
+			return true
+		}
+	}
+	return false
 }
 
 func (n *Notify) SendText(body string) {
+	if n.isIgnore(body) {
+		return
+	}
 	msg := &Message{
 		MsgType: "text",
 		Text:    Text{Content: body},
 	}
 
 	for _, dst := range n.dstList {
-		_ = sendMsg(msg, dst)
+		_ = n.sendMsg(msg, dst)
 	}
 }
 
 func (n *Notify) SendLink(title string, body string, url string) {
+	if n.isIgnore(body) {
+		return
+	}
 	msg := &Message{
 		MsgType: "link",
 		Link: Link{
@@ -54,11 +88,11 @@ func (n *Notify) SendLink(title string, body string, url string) {
 	}
 
 	for _, dst := range n.dstList {
-		_ = sendMsg(msg, dst)
+		_ = n.sendMsg(msg, dst)
 	}
 }
 
-func sendMsg(message *Message, dst string) error {
+func (n *Notify) sendMsg(message *Message, dst string) error {
 	msgBytes, _ := json.Marshal(message)
 	msgStr := util.BytesString(msgBytes)
 
