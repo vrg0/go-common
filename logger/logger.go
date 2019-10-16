@@ -1,16 +1,12 @@
 package logger
 
 import (
-	"errors"
 	"github.com/natefinch/lumberjack"
-	"github.com/vrg0/go-common/args"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"io"
 	"log"
 	"os"
-	"sync/atomic"
-	"unsafe"
 )
 
 type Logger struct {
@@ -19,6 +15,7 @@ type Logger struct {
 	writer *hookWriter
 }
 
+/*
 var (
 	defaultLogger *Logger = nil
 )
@@ -47,6 +44,7 @@ func ResetDefaultLogger(logPath string, level zapcore.Level) error {
 	atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&defaultLogger)), unsafe.Pointer(newLogger))
 	return nil
 }
+*/
 
 // 新建Logger对象，成功返回对象指针，失败返回nil
 func New(logPath string, level zapcore.Level) *Logger {
@@ -178,6 +176,7 @@ func (l *Logger) Fatalw(msg string, keysAndValues ...interface{}) {
 	l.sugar.Fatalw(msg, keysAndValues...)
 }
 
+/*
 func Debug(args ...interface{}) {
 	defaultLogger.Debug(args...)
 }
@@ -269,3 +268,4 @@ func SetHookFunc(hookFunc HookFunc) {
 func GetStandardLogger() *log.Logger {
 	return defaultLogger.GetStandardLogger()
 }
+ */

@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bytes"
+	"github.com/vrg0/go-common/args"
 	"go.uber.org/zap/zapcore"
 	"io/ioutil"
 	"os"
@@ -10,28 +11,45 @@ import (
 	"testing"
 )
 
+var tLog *Logger = nil
+
+func init() {
+	env := args.GetOrDefault("env", "dev")
+	var logPath string
+	var level zapcore.Level
+	if env == "dev" {
+		logPath = args.GetOrDefault("log_path", "/dev/stdout")
+		level = zapcore.DebugLevel
+	} else {
+		logPath = args.GetOrDefault("log_path", os.Args[0]+".log")
+		level = zapcore.InfoLevel
+	}
+
+	tLog = New(logPath, level)
+}
+
 func TestDebug(t *testing.T) {
-	Debug("test Debug")
+	tLog.Debug("test Debug")
 }
 
 func TestDebugf(t *testing.T) {
-	Debugf("test Debug%s", "f")
+	tLog.Debugf("test Debug%s", "f")
 }
 
 func TestDebugw(t *testing.T) {
-	Debugw("test Debugw", "k1", "v1", "k2", "v2")
+	tLog.Debugw("test Debugw", "k1", "v1", "k2", "v2")
 }
 
 func TestInfo(t *testing.T) {
-	Info("test Info")
+	tLog.Info("test Info")
 }
 
 func TestInfof(t *testing.T) {
-	Infof("test Info%s", "f")
+	tLog.Infof("test Info%s", "f")
 }
 
 func TestInfow(t *testing.T) {
-	Infow("test Infow", "k1", "v1", "k2", "v2")
+	tLog.Infow("test Infow", "k1", "v1", "k2", "v2")
 }
 
 func TestPanic(t *testing.T) {
@@ -40,7 +58,7 @@ func TestPanic(t *testing.T) {
 			t.Log(e)
 		}
 	}()
-	Panic("test Panic")
+	tLog.Panic("test Panic")
 }
 
 func TestPanicf(t *testing.T) {
@@ -49,7 +67,7 @@ func TestPanicf(t *testing.T) {
 			t.Log(e)
 		}
 	}()
-	Panicf("test Panic%s", "f")
+	tLog.Panicf("test Panic%s", "f")
 }
 
 func TestPanicw(t *testing.T) {
@@ -58,7 +76,7 @@ func TestPanicw(t *testing.T) {
 			t.Log(e)
 		}
 	}()
-	Panicw("test Panicw", "k1", "v1", "k2", "v2")
+	tLog.Panicw("test Panicw", "k1", "v1", "k2", "v2")
 }
 
 func TestDPanicw(t *testing.T) {
@@ -67,32 +85,32 @@ func TestDPanicw(t *testing.T) {
 			t.Log(e)
 		}
 	}()
-	DPanicw("test Panicw", "k1", "v1", "k2", "v2")
+	tLog.DPanicw("test Panicw", "k1", "v1", "k2", "v2")
 }
 
 func TestDPanic(t *testing.T) {
-	DPanic("test DPanic")
+	tLog.DPanic("test DPanic")
 }
 
 func TestDPanicf(t *testing.T) {
-	DPanicf("test DPanic%s", "f")
+	tLog.DPanicf("test DPanic%s", "f")
 }
 
 func TestError(t *testing.T) {
-	Error("test Error")
+	tLog.Error("test Error")
 }
 
 func TestErrorf(t *testing.T) {
-	Errorf("test Error%s", "f")
+	tLog.Errorf("test Error%s", "f")
 }
 
 func TestErrorw(t *testing.T) {
-	Errorw("test Errorw", "k1", "v1", "k2", "v2")
+	tLog.Errorw("test Errorw", "k1", "v1", "k2", "v2")
 }
 
 func TestFatal(t *testing.T) {
 	if os.Getenv("TEST_FATAL") == "1" {
-		Fatal("test Fatal")
+		tLog.Fatal("test Fatal")
 	}
 
 	stdAll := new(bytes.Buffer)
@@ -112,7 +130,7 @@ func TestFatal(t *testing.T) {
 
 func TestFatalf(t *testing.T) {
 	if os.Getenv("TEST_FATALF") == "1" {
-		Fatalf("test Fatal%s", "f")
+		tLog.Fatalf("test Fatal%s", "f")
 	}
 
 	stdAll := new(bytes.Buffer)
@@ -132,7 +150,7 @@ func TestFatalf(t *testing.T) {
 
 func TestFatalw(t *testing.T) {
 	if os.Getenv("TEST_FATALW") == "1" {
-		Fatalw("test Fatalw", "k1", "v1", "k2", "v2")
+		tLog.Fatalw("test Fatalw", "k1", "v1", "k2", "v2")
 	}
 
 	stdAll := new(bytes.Buffer)
@@ -151,34 +169,36 @@ func TestFatalw(t *testing.T) {
 }
 
 func TestWarn(t *testing.T) {
-	Warn("test Warn")
+	tLog.Warn("test Warn")
 }
 
 func TestWarnf(t *testing.T) {
-	Warnf("test Warn%s", "f")
+	tLog.Warnf("test Warn%s", "f")
 }
 
 func TestWarnw(t *testing.T) {
-	Warnw("test Warnw", "k1", "v1", "k2", "v2")
+	tLog.Warnw("test Warnw", "k1", "v1", "k2", "v2")
 }
 
+/*
 func TestResetDefaultLogger(t *testing.T) {
 	ResetDefaultLogger("/dev/stderr", zapcore.InfoLevel)
 	Info("reset default logger")
 }
+ */
 
 func TestSetHookFunc(t *testing.T) {
-	SetHookFunc(func(data []byte) {
+	tLog.SetHookFunc(func(data []byte) {
 		t.Log("data hook", string(data))
 	})
 
-	Info("test hook")
+	tLog.Info("test hook")
 }
 
 func TestGetStandardLogger(t *testing.T) {
-	sl := GetStandardLogger()
+	sl := tLog.GetStandardLogger()
 	sl.SetPrefix("_TestStandardLogger_")
-	SetHookFunc(func(data []byte) {
+	tLog.SetHookFunc(func(data []byte) {
 		if strings.Contains(string(data), "_TestStandardLogger_") {
 			t.Log("hook _TestStandardLogger_")
 		}
