@@ -95,7 +95,7 @@ func (c *Conf)Watch(namespace string, key string, handler func(oldCfg string, ne
 	c.keyHandler = newKeyHandler
 
 	//首次加载数据
-	kv := GetNamespace(namespace)
+	kv := c.GetNamespace(namespace)
 	if v, ok := kv[key]; ok {
 		handler("", v)
 	}
