@@ -11,9 +11,7 @@ package conf
 
 import (
 	"github.com/shima-park/agollo"
-	"github.com/vrg0/go-common/args"
 	"log"
-	"os"
 	"strings"
 	"time"
 )
@@ -22,10 +20,6 @@ const (
 	kvMapReplaceDeep  = 8
 	placeHolderPrefix = "${"
 	placeHolderSuffix = "}"
-)
-
-var (
-	defaultConf *Conf = nil
 )
 
 type Conf struct {
@@ -163,6 +157,11 @@ func (c *Conf) GetNamespace(namespace string) map[string]string {
 	return rtn
 }
 
+/*
+var (
+	defaultConf *Conf = nil
+)
+
 //初始化，如果初始化失败，则不可使用defaultConf
 func init() {
 	configServer, ok := args.Get("config_server")
@@ -237,3 +236,4 @@ func Watch(namespace string, key string, handler func(oldCfg string, newCfg stri
 	}
 	defaultConf.Watch(namespace, key, handler)
 }
+ */

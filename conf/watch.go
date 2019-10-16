@@ -78,7 +78,7 @@ func (c *Conf)WatchNamespace(namespace string, handler func(oldCfgs map[string]s
 	c.namespaceHandler = newNamespaceHandler
 
 	//首次加载数据
-	handler(make(map[string]string), GetNamespace(namespace))
+	handler(make(map[string]string), c.GetNamespace(namespace))
 }
 
 func (c *Conf)Watch(namespace string, key string, handler func(oldCfg string, newCfg string)) {
