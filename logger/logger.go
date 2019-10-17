@@ -71,7 +71,7 @@ func New(logPath string, level zapcore.Level) *Logger {
 			Compress:   false,   //日志备份不进行压缩，压缩会导致占用过多cpu
 		}
 	}
-	rtn.writer = newHookWriter(writer)
+	rtn.writer = NewHookWriter(writer)
 
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = zapcore.ISO8601TimeEncoder

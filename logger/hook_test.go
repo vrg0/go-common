@@ -7,7 +7,7 @@ import (
 )
 
 func TestWatchWriter(t *testing.T) {
-	ww := newHookWriter(os.Stdout)
+	ww := NewHookWriter(os.Stdout)
 	ww.AddHookFunc(func(data []byte) {
 		t.Log(string(data))
 	})

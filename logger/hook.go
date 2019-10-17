@@ -11,7 +11,7 @@ type hookWriter struct {
 	hookFuncList     []HookFunc
 }
 
-func newHookWriter(w io.Writer) *hookWriter {
+func NewHookWriter(w io.Writer) *hookWriter {
 	return &hookWriter{
 		writer:           w,
 		hookFuncList:     make([]HookFunc, 0),
