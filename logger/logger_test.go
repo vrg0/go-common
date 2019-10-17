@@ -185,11 +185,12 @@ func TestResetDefaultLogger(t *testing.T) {
 	ResetDefaultLogger("/dev/stderr", zapcore.InfoLevel)
 	Info("reset default logger")
 }
- */
+*/
 
 func TestSetHookFunc(t *testing.T) {
-	tLog.SetHookFunc(func(data []byte) {
+	tLog.SetHookFunc(func(data []byte) bool {
 		t.Log("data hook", string(data))
+		return true
 	})
 
 	tLog.Info("test hook")
@@ -198,10 +199,11 @@ func TestSetHookFunc(t *testing.T) {
 func TestGetStandardLogger(t *testing.T) {
 	sl := tLog.GetStandardLogger()
 	sl.SetPrefix("_TestStandardLogger_")
-	tLog.SetHookFunc(func(data []byte) {
+	tLog.SetHookFunc(func(data []byte) bool {
 		if strings.Contains(string(data), "_TestStandardLogger_") {
 			t.Log("hook _TestStandardLogger_")
 		}
+		return true
 	})
 	sl.Print("test get standard logger")
 }

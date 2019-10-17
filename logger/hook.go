@@ -4,7 +4,8 @@ import (
 	"io"
 )
 
-type HookFunc func(data []byte)
+//当返回false时，则不会调用hw.writer.Writer()
+type HookFunc func(data []byte) bool
 
 type hookWriter struct {
 	writer           io.Writer
@@ -21,7 +22,9 @@ func NewHookWriter(w io.Writer) *hookWriter {
 func (hw *hookWriter) Write(p []byte) (n int, err error) {
 	if len(hw.hookFuncList) != 0 {
 		for _, handler := range hw.hookFuncList {
-			handler(p)
+			if !handler(p) {
+				return
+			}
 		}
 	}
 
