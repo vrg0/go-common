@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/vrg0/go-common/util"
+	"golang.org/x/time/rate"
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 type Message struct {
@@ -26,9 +28,17 @@ type Text struct {
 }
 
 type Notify struct {
-	dstList []string
-	ignore  []string
-	re      []string
+	dstList      []string
+	ignore       []string
+	re           []string
+	limitMap     map[string]*rate.Limiter
+	limitMapLock *sync.RWMutex
+}
+
+func (n *Notify) SetIgnoreWithLimiter(sub string, r rate.Limit, b int) {
+	n.limitMapLock.Lock()
+	n.limitMap[sub] = rate.NewLimiter(r, b)
+	n.limitMapLock.Unlock()
 }
 
 func (n *Notify) SetIgnore(ignore []string) {
@@ -41,22 +51,36 @@ func (n *Notify) SetIgnoreRegexp(re []string) {
 
 func New(dstList []string) *Notify {
 	return &Notify{
-		dstList: dstList,
-		ignore:  make([]string, 0),
+		dstList:      dstList,
+		ignore:       make([]string, 0),
+		re:           make([]string, 0),
+		limitMap:     make(map[string]*rate.Limiter),
+		limitMapLock: new(sync.RWMutex),
 	}
 }
 
 func (n *Notify) isIgnore(body string) bool {
+	//字符串匹配
 	for _, sub := range n.ignore {
 		if strings.Contains(body, sub) {
 			return true
 		}
 	}
+	//正则匹配
 	for _, r := range n.re {
 		if ok, _ := regexp.MatchString(r, body); ok {
 			return true
 		}
 	}
+	//字符串匹配 + 最小值
+	n.limitMapLock.RLock()
+	for sub, l := range n.limitMap {
+		if strings.Contains(body, sub) && !l.Allow() {
+			return true
+		}
+	}
+	n.limitMapLock.RUnlock()
+
 	return false
 }
 
