@@ -15,8 +15,13 @@ var (
 	defaultSender *Sender = nil
 )
 
-func NewSender(cluster []string) (*Sender, error) {
+func NewSender(cluster []string, id string) (*Sender, error) {
+	if id == "" {
+		id = "kafka_sender"
+	}
+
 	config := sarama.NewConfig()
+	config.ClientID = id
 	config.Producer.RequiredAcks = sarama.WaitForAll          //等待服务器所有副本都保存成功后的响应
 	config.Producer.Partitioner = sarama.NewRandomPartitioner //随机的分区类型
 	config.Producer.Return.Successes = true                   //是否等待成功和失败后的响应
