@@ -15,13 +15,14 @@ var (
 	defaultSender *Sender = nil
 )
 
-func NewSender(cluster []string, id string) (*Sender, error) {
+func NewSender(cluster []string, id string, kafkaVersion sarama.KafkaVersion) (*Sender, error) {
 	if id == "" {
 		id = "kafka_sender"
 	}
 
 	config := sarama.NewConfig()
 	config.ClientID = id
+	config.Version = kafkaVersion
 	config.Producer.RequiredAcks = sarama.WaitForAll          //等待服务器所有副本都保存成功后的响应
 	config.Producer.Partitioner = sarama.NewRandomPartitioner //随机的分区类型
 	config.Producer.Return.Successes = true                   //是否等待成功和失败后的响应
@@ -54,9 +55,9 @@ func (s *Sender) SendMsg(topic string, value string) error {
 	return nil
 }
 
-func InitSender(cluster []string, id string) error {
+func InitSender(cluster []string, id string, kafkaVersion sarama.KafkaVersion) error {
 	if defaultSender == nil {
-		if sender, e := NewSender(cluster, id); e != nil {
+		if sender, e := NewSender(cluster, id, kafkaVersion); e != nil {
 			return e
 		} else {
 			defaultSender = sender
