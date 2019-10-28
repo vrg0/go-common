@@ -27,6 +27,7 @@ func NewSender(cluster []string, id string, kafkaVersion sarama.KafkaVersion) (*
 	config.Producer.Partitioner = sarama.NewRandomPartitioner //随机的分区类型
 	config.Producer.Return.Successes = true                   //是否等待成功和失败后的响应
 	config.Producer.Timeout = 3 * time.Second                 //3秒超时
+	config.Metadata.RefreshFrequency = 60 * time.Second       //broker每隔60秒做一次健康检查
 
 	//使用给定代理地址和配置创建一个同步生产者
 	producer, e := sarama.NewSyncProducer(cluster, config)
