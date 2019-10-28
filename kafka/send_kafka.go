@@ -54,9 +54,9 @@ func (s *Sender) SendMsg(topic string, value string) error {
 	return nil
 }
 
-func InitSender(cluster []string) error {
+func InitSender(cluster []string, id string) error {
 	if defaultSender == nil {
-		if sender, e := NewSender(cluster); e != nil {
+		if sender, e := NewSender(cluster, id); e != nil {
 			return e
 		} else {
 			defaultSender = sender
