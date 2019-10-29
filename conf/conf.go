@@ -23,19 +23,19 @@ const (
 )
 
 type Conf struct {
-	kvMap                map[string]string
-	ago                  agollo.Agollo
-	logger               *log.Logger
-	namespaceHandler     []*watchNamespaceHandler
-	keyHandler           []*watchKeyHandler
+	kvMap            map[string]string
+	ago              agollo.Agollo
+	logger           *log.Logger
+	namespaceHandler []*watchNamespaceHandler
+	keyHandler       []*watchKeyHandler
 }
 
 func New(configServer string, appId string, cluster string, cacheFilePath string, logger *log.Logger) (*Conf, error) {
 	rtn := Conf{
-		kvMap:                make(map[string]string),
-		logger:               logger,
-		namespaceHandler:     make([]*watchNamespaceHandler, 0),
-		keyHandler:           make([]*watchKeyHandler, 0),
+		kvMap:            make(map[string]string),
+		logger:           logger,
+		namespaceHandler: make([]*watchNamespaceHandler, 0),
+		keyHandler:       make([]*watchKeyHandler, 0),
 	}
 
 	if newAgo, err := agollo.New(
@@ -156,84 +156,3 @@ func (c *Conf) GetNamespace(namespace string) map[string]string {
 
 	return rtn
 }
-
-/*
-var (
-	defaultConf *Conf = nil
-)
-
-//初始化，如果初始化失败，则不可使用defaultConf
-func init() {
-	configServer, ok := args.Get("config_server")
-	if !ok {
-		return
-	}
-	appName, ok := args.Get("app_name")
-	if !ok {
-		return
-	}
-	idc, ok := args.Get("idc")
-	if !ok {
-		return
-	}
-	cacheFilePath := args.GetOrDefault("cache_file_path", os.Args[0]+".cache_file")
-
-	if newConf, err := New(configServer, appName, idc, cacheFilePath, nil); err != nil {
-		return
-	} else {
-		defaultConf = newConf
-	}
-}
-
-//重新设置DefaultConf
-func ResetDefaultConf(configServer string, appName string, idc string, cacheFilePath string, logger *log.Logger) error {
-	if newConf, err := New(configServer, appName, idc, cacheFilePath, logger); err != nil {
-		return err
-	} else {
-		defaultConf = newConf
-	}
-	return nil
-}
-
-func RefreshKvMap(kvMapper map[string]string) {
-	if defaultConf == nil {
-		return
-	}
-	defaultConf.RefreshKvMap(kvMapper)
-}
-
-func Get(namespace string, key string) (string, bool) {
-	if defaultConf == nil {
-		return "", false
-	}
-	return defaultConf.Get(namespace, key)
-}
-
-func GetOrDefault(namespace string, key string, defaultValue string) string {
-	if defaultConf == nil {
-		return defaultValue
-	}
-	return defaultConf.GetOrDefault(namespace, key, defaultValue)
-}
-
-func GetNamespace(namespace string) map[string]string {
-	if defaultConf == nil {
-		return make(map[string]string)
-	}
-	return defaultConf.GetNamespace(namespace)
-}
-
-func WatchNamespace(namespace string, handler func(oldCfgs map[string]string, newCfgs map[string]string)) {
-	if defaultConf == nil {
-		return
-	}
-	defaultConf.WatchNamespace(namespace, handler)
-}
-
-func Watch(namespace string, key string, handler func(oldCfg string, newCfg string)) {
-	if defaultConf == nil {
-		return
-	}
-	defaultConf.Watch(namespace, key, handler)
-}
- */

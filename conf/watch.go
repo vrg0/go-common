@@ -56,7 +56,7 @@ func (c *Conf) startWatch() {
 				}
 
 				for _, v := range c.keyHandler {
-					if v.Namespace == w.Namespace {
+					if v.Namespace == w.Namespace && oldValue[v.Key] != newValue[v.Key] {
 						v.Handler(oldValue[v.Key], newValue[v.Key])
 					}
 				}
@@ -65,7 +65,7 @@ func (c *Conf) startWatch() {
 	}()
 }
 
-func (c *Conf)WatchNamespace(namespace string, handler func(oldCfgs map[string]string, newCfgs map[string]string)) {
+func (c *Conf) WatchNamespace(namespace string, handler func(oldCfgs map[string]string, newCfgs map[string]string)) {
 	//添加处理函数
 	newNamespaceHandler := make([]*watchNamespaceHandler, 0)
 	for _, watchHandler := range c.namespaceHandler {
@@ -81,7 +81,7 @@ func (c *Conf)WatchNamespace(namespace string, handler func(oldCfgs map[string]s
 	handler(make(map[string]string), c.GetNamespace(namespace))
 }
 
-func (c *Conf)Watch(namespace string, key string, handler func(oldCfg string, newCfg string)) {
+func (c *Conf) Watch(namespace string, key string, handler func(oldCfg string, newCfg string)) {
 	//加载处理函数
 	newKeyHandler := make([]*watchKeyHandler, 0)
 	for _, watchHandler := range c.keyHandler {
