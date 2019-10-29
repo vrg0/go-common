@@ -15,37 +15,6 @@ type Logger struct {
 	writer *hookWriter
 }
 
-/*
-var (
-	defaultLogger *Logger = nil
-)
-
-func init() {
-	env := args.GetOrDefault("env", "dev")
-	var logPath string
-	var level zapcore.Level
-	if env == "dev" {
-		logPath = args.GetOrDefault("log_path", "/dev/stdout")
-		level = zapcore.DebugLevel
-	} else {
-		logPath = args.GetOrDefault("log_path", os.Args[0]+".log")
-		level = zapcore.InfoLevel
-	}
-
-	defaultLogger = New(logPath, level)
-}
-
-func ResetDefaultLogger(logPath string, level zapcore.Level) error {
-	if logPath == "" {
-		return errors.New("logPath can not be equal to nil")
-	}
-
-	newLogger := New(logPath, level)
-	atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&defaultLogger)), unsafe.Pointer(newLogger))
-	return nil
-}
-*/
-
 // 新建Logger对象，成功返回对象指针，失败返回nil
 func New(logPath string, level zapcore.Level) *Logger {
 	//参数过滤
@@ -86,6 +55,10 @@ func New(logPath string, level zapcore.Level) *Logger {
 
 func (l *Logger) GetStandardLogger() *log.Logger {
 	return zap.NewStdLog(l.logger)
+}
+
+func (l *Logger) GetSugaredLogger() *zap.SugaredLogger {
+	return l.logger.Sugar()
 }
 
 func (l *Logger) SetHookFunc(hookFunc HookFunc) {
@@ -176,96 +149,3 @@ func (l *Logger) Fatalw(msg string, keysAndValues ...interface{}) {
 	l.sugar.Fatalw(msg, keysAndValues...)
 }
 
-/*
-func Debug(args ...interface{}) {
-	defaultLogger.Debug(args...)
-}
-
-func Info(args ...interface{}) {
-	defaultLogger.Info(args...)
-}
-
-func Warn(args ...interface{}) {
-	defaultLogger.Warn(args...)
-}
-
-func Error(args ...interface{}) {
-	defaultLogger.Error(args...)
-}
-
-func DPanic(args ...interface{}) {
-	defaultLogger.DPanic(args...)
-}
-
-func Panic(args ...interface{}) {
-	defaultLogger.Panic(args...)
-}
-
-func Fatal(args ...interface{}) {
-	defaultLogger.Fatal(args...)
-}
-
-func Debugf(template string, args ...interface{}) {
-	defaultLogger.Debugf(template, args...)
-}
-
-func Infof(template string, args ...interface{}) {
-	defaultLogger.Infof(template, args...)
-}
-
-func Warnf(template string, args ...interface{}) {
-	defaultLogger.Warnf(template, args...)
-}
-
-func Errorf(template string, args ...interface{}) {
-	defaultLogger.Errorf(template, args...)
-}
-
-func DPanicf(template string, args ...interface{}) {
-	defaultLogger.DPanicf(template, args...)
-}
-
-func Panicf(template string, args ...interface{}) {
-	defaultLogger.Panicf(template, args...)
-}
-
-func Fatalf(template string, args ...interface{}) {
-	defaultLogger.Fatalf(template, args...)
-}
-
-func Debugw(msg string, keysAndValues ...interface{}) {
-	defaultLogger.Debugw(msg, keysAndValues...)
-}
-
-func Infow(msg string, keysAndValues ...interface{}) {
-	defaultLogger.Infow(msg, keysAndValues...)
-}
-
-func Warnw(msg string, keysAndValues ...interface{}) {
-	defaultLogger.Warnw(msg, keysAndValues...)
-}
-
-func Errorw(msg string, keysAndValues ...interface{}) {
-	defaultLogger.Errorw(msg, keysAndValues...)
-}
-
-func DPanicw(msg string, keysAndValues ...interface{}) {
-	defaultLogger.DPanicw(msg, keysAndValues...)
-}
-
-func Panicw(msg string, keysAndValues ...interface{}) {
-	defaultLogger.Panicw(msg, keysAndValues...)
-}
-
-func Fatalw(msg string, keysAndValues ...interface{}) {
-	defaultLogger.Fatalw(msg, keysAndValues...)
-}
-
-func SetHookFunc(hookFunc HookFunc) {
-	defaultLogger.writer.AddHookFunc(hookFunc)
-}
-
-func GetStandardLogger() *log.Logger {
-	return defaultLogger.GetStandardLogger()
-}
- */
