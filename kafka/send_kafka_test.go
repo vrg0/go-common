@@ -1,11 +1,12 @@
 package kafka
 
-import "testing"
-
-var testSender *Sender = nil
+import (
+	"github.com/Shopify/sarama"
+	"testing"
+)
 
 func TestInitSender(t *testing.T) {
-	if e := InitSender([]string{"127.0.0.1:9092"}); e != nil {
+	if e := InitSender([]string{"192.168.29.186:9092"}, "test222", sarama.V1_0_0_0); e != nil {
 		t.Error(e)
 	}
 }
@@ -13,21 +14,6 @@ func TestInitSender(t *testing.T) {
 func TestSendMsg(t *testing.T) {
 	TestInitSender(t)
 	if e := SendMsg("test", "123"); e != nil {
-		t.Error(e)
-	}
-}
-
-func TestNewSender(t *testing.T) {
-	if sender, e := NewSender([]string{"127.0.0.1:9092"}); e != nil {
-		t.Error(e)
-	} else {
-		testSender = sender
-	}
-}
-
-func TestSender_SendMsg(t *testing.T) {
-	TestNewSender(t)
-	if e := testSender.SendMsg("test2", "234"); e != nil {
 		t.Error(e)
 	}
 }
