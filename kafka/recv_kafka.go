@@ -5,9 +5,6 @@ import (
 	"errors"
 	"github.com/Shopify/sarama"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 type Recver struct {
@@ -16,11 +13,7 @@ type Recver struct {
 	logger  *log.Logger
 }
 
-func (recver *Recver) Print(args ...interface{}) {
-	if recver.logger != nil {
-		recver.logger.Print(args...)
-	}
-}
+type ConsumerCallback func(msg *sarama.ConsumerMessage)
 
 func NewRecver(version sarama.KafkaVersion, cluster []string, logger *log.Logger) *Recver {
 	config := sarama.NewConfig()
@@ -35,28 +28,25 @@ func NewRecver(version sarama.KafkaVersion, cluster []string, logger *log.Logger
 	}
 }
 
-type ConsumerCallback func(msg *sarama.ConsumerMessage)
-
-type consumer struct {
-	callback ConsumerCallback
-}
-
-//新建一个接收器，logger可为nil
-func newConsumer(callback ConsumerCallback) *consumer {
-	return &consumer{
-		callback: callback,
+func (recver *Recver) print(args ...interface{}) {
+	if recver.logger != nil {
+		recver.logger.Print(args...)
 	}
 }
 
-func (c *consumer) Setup(sarama.ConsumerGroupSession) error {
+type coreConsumer struct {
+	callback ConsumerCallback
+}
+
+func (c *coreConsumer) Setup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (c *consumer) Cleanup(sarama.ConsumerGroupSession) error {
+func (c *coreConsumer) Cleanup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+func (c *coreConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for message := range claim.Messages() {
 		c.callback(message)
 		session.MarkMessage(message, "")
@@ -64,48 +54,49 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 	return nil
 }
 
-func (recver *Recver) ListenAndRecvMsg(groupId string, topics []string, callback ConsumerCallback) error {
+type Consumer struct {
+	cancel context.CancelFunc
+	client sarama.ConsumerGroup
+}
+
+func (consumer *Consumer) Close() {
+	consumer.cancel()
+	_ = consumer.client.Close()
+}
+
+func (recver *Recver) NewConsumer(groupId string, topics []string, callback ConsumerCallback) (*Consumer, error) {
 	if callback == nil {
-		return errors.New("callback can not be nil")
+		return nil, errors.New("callback can not be nil")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	client, err := sarama.NewConsumerGroup(recver.cluster, groupId, recver.config)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	rtn := &Consumer{
+		cancel: cancel,
+		client: client,
 	}
 
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				recver.Print(err)
+				recver.print(err)
+			}
+
+			for {
+				if err := client.Consume(ctx, topics, &coreConsumer{callback: callback}); err != nil {
+					recver.print(err)
+					continue
+				}
+				if ctx.Err() != nil {
+					return
+				}
 			}
 		}()
-
-		consumerObj := newConsumer(callback)
-		for {
-			if err := client.Consume(ctx, topics, consumerObj); err != nil {
-				recver.Print(err)
-				continue
-			}
-			if ctx.Err() != nil {
-				return
-			}
-		}
 	}()
 
-	go func() {
-		sigterm := make(chan os.Signal, 1)
-		signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
-		select {
-		case <-ctx.Done():
-			cancel()
-			_ = client.Close()
-		case <-sigterm:
-			cancel()
-			_ = client.Close()
-		}
-	}()
-
-	return nil
+	return rtn, nil
 }

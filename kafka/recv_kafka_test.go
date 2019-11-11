@@ -17,7 +17,7 @@ func TestNewRecver(t *testing.T) {
 
 func TestRecver_ListenAndRecvMsg(t *testing.T) {
 	x := NewRecver(sarama.V1_0_0_0, []string{"192.168.29.186:9092"}, log.New(os.Stdout, "", 0))
-	err := x.ListenAndRecvMsg("123", []string{"test"}, func(msg *sarama.ConsumerMessage) {
+	_, err := x.NewConsumer("123", []string{"test"}, func(msg *sarama.ConsumerMessage) {
 		fmt.Println(string(msg.Key), string(msg.Value))
 	})
 
