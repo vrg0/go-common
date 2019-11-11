@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"errors"
 	"github.com/Shopify/sarama"
 	"log"
 	"os"
@@ -64,6 +65,10 @@ func (c *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 }
 
 func (recver *Recver) ListenAndRecvMsg(groupId string, topics []string, callback ConsumerCallback) error {
+	if callback == nil {
+		return errors.New("callback can not be nil")
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	client, err := sarama.NewConsumerGroup(recver.cluster, groupId, recver.config)
 	if err != nil {
