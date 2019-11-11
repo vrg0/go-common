@@ -85,17 +85,17 @@ func (recver *Recver) NewConsumer(groupId string, topics []string, callback Cons
 			if err := recover(); err != nil {
 				recver.print(err)
 			}
-
-			for {
-				if err := client.Consume(ctx, topics, &coreConsumer{callback: callback}); err != nil {
-					recver.print(err)
-					continue
-				}
-				if ctx.Err() != nil {
-					return
-				}
-			}
 		}()
+
+		for {
+			if err := client.Consume(ctx, topics, &coreConsumer{callback: callback}); err != nil {
+				recver.print(err)
+				continue
+			}
+			if ctx.Err() != nil {
+				return
+			}
+		}
 	}()
 
 	return rtn, nil
