@@ -89,16 +89,18 @@ func (recver *Recver) ListenAndRecvMsg(groupId string, topics []string, callback
 		}
 	}()
 
-	sigterm := make(chan os.Signal, 1)
-	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
-	select {
-	case <-ctx.Done():
-		cancel()
-		_ = client.Close()
-	case <-sigterm:
-		cancel()
-		_ = client.Close()
-	}
+	go func() {
+		sigterm := make(chan os.Signal, 1)
+		signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
+		select {
+		case <-ctx.Done():
+			cancel()
+			_ = client.Close()
+		case <-sigterm:
+			cancel()
+			_ = client.Close()
+		}
+	}()
 
 	return nil
 }

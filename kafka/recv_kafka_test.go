@@ -24,4 +24,6 @@ func TestRecver_ListenAndRecvMsg(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	select {}
 }
