@@ -182,7 +182,7 @@ func (cr *consulRegistry) GetService(serviceName string) (*Service, bool) {
 func (cr *consulRegistry) SetObserver(observer Observer) error {
 	//更新数据
 	for _, service := range cr.serviceMap {
-		observer.UpdateNodes(service)
+		observer.UpdateNodes(DeepCopyService(service))
 	}
 	cr.observerMap.Store(observer, observer)
 	return nil
