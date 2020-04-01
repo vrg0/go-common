@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Message struct {
@@ -33,6 +34,7 @@ type Notify struct {
 	re           []string
 	limitMap     map[string]*rate.Limiter
 	limitMapLock *sync.RWMutex
+	client       *http.Client
 }
 
 func (n *Notify) SetIgnoreWithLimiter(sub string, r rate.Limit, b int) {
@@ -56,6 +58,9 @@ func New(dstList []string) *Notify {
 		re:           make([]string, 0),
 		limitMap:     make(map[string]*rate.Limiter),
 		limitMapLock: new(sync.RWMutex),
+		client: &http.Client{
+			Timeout: time.Second * 10, //10秒超时
+		},
 	}
 }
 
@@ -122,7 +127,7 @@ func (n *Notify) sendMsg(message *Message, dst string) error {
 
 	for i := 0; i < 3; i++ {
 		data := strings.NewReader(msgStr)
-		_, e := http.Post(dst, "application/json;charset=utf-8", data)
+		_, e := n.client.Post(dst, "application/json;charset=utf-8", data)
 		if e == nil {
 			break
 		} else if i == 2 {
