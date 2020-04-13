@@ -1,6 +1,9 @@
 package demo
 
 func F(str string) string {
+	if len(str) == 0 {
+		return str
+	}
 	rtn1 := F1(str)
 	rtn2 := F2(str)
 	if len(rtn1) > len(rtn2) {

@@ -3,6 +3,10 @@ package demo
 import "testing"
 
 func TestDemoF(t *testing.T) {
+	t.Log(F(""))
+	t.Log(F("a"))
+	t.Log(F("aa"))
+	t.Log(F("cccccaabaa"))
 	t.Log(F("abc"))
 	t.Log(F("aaaaac"))
 }
